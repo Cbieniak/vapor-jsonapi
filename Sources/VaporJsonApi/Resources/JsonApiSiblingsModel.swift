@@ -8,6 +8,7 @@
 
 import Vapor
 import Fluent
+import FluentProvider
 
 public struct JsonApiSiblingsModel {
 
@@ -38,22 +39,24 @@ public struct JsonApiSiblingsModel {
 
     public init<S: JsonApiResourceModel, T: JsonApiResourceModel>(model: S, siblingType: T.Type, localKey: String? = nil, foreignKey: String? = nil) {
         getter = { paginator in
-            let elements: [S] = try model.siblings(localKey, foreignKey).limit(paginator.pageCount, withOffset: paginator.pageOffset).all()
+            let elements: [S] = try model.siblings(to: S.self, through: T.self, localIdKey: localKey!, foreignIdKey: foreignKey!).limit(paginator.pageCount, offset: paginator.pageOffset).all()
             return elements
         }
 
         // TODO: Don't allow duplicate linkage
         self.adder = { siblings in
             for s in siblings {
-                var p = Pivot<S, T>(model, s)
+                let p = try Pivot<S, T>(model, s as! T)
                 try p.save()
             }
         }
         self.replacer = { siblings in
-            let oldSiblings: Siblings<T> = try model.siblings(localKey, foreignKey)
+            
+            //?
+            let oldSiblings: Siblings<S, S, T> = model.siblings(to: S.self, through: T.self, localIdKey: localKey!, foreignIdKey: foreignKey!)
             try oldSiblings.delete()
             for s in siblings {
-                var p = Pivot<S, T>(model, s)
+                let p = try Pivot<S, T>(model, s as! T)
                 try p.save()
             }
         }
