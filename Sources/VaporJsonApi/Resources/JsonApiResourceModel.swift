@@ -9,8 +9,10 @@
 import Vapor
 import HTTP
 import Fluent
+import FluentProvider
 
 open class JsonApiResourceModel: Model, JsonApiResourceRepresentable {
+    public let storage = Storage()
 
     // MARK: - JsonApiResourceRepresentable stubs
 
@@ -38,7 +40,7 @@ open class JsonApiResourceModel: Model, JsonApiResourceRepresentable {
 
     open var id: Node?
 
-    public init() {}
+    //public init() {}
 
     /**
      * Initializes all required and optional attributes from the given `node`, runs validations and
@@ -67,5 +69,21 @@ open class JsonApiResourceModel: Model, JsonApiResourceRepresentable {
 
     open class func revert(_ database: Database) throws {
         throw JsonApiInternalServerError(title: "Internal Server Error", detail: "Subclasses of 'Model' must implement revert(_:)")
+    }
+    
+    public required init(row: Row) throws { }
+    
+    public func makeRow() throws -> Row {
+        let row = Row()
+        return row
+    }
+    
+    //TODO?
+    public static func make(for parameter: String) throws -> Self {
+        let id = Identifier(parameter)
+        guard let found = try find(id) else {
+            throw Abort(.notFound, reason: "No with that identifier was found.")
+        }
+        return found
     }
 }

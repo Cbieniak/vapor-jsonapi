@@ -10,6 +10,7 @@ import Vapor
 import HTTP
 import Fluent
 import URI
+import FluentProvider
 
 public protocol JsonApiResourceController {
     associatedtype Resource: JsonApiResourceModel
@@ -41,7 +42,7 @@ public extension JsonApiResourceController {
         let page = try pageForQuery(query: query)
         let pagination = JsonApiPagedPaginator(pageCount: page.pageCount, pageSize: page.pageNumber)
 
-        let resources = try Resource.query().limit(pagination.pageCount, withOffset: pagination.pageOffset).all()
+        let resources = try Resource.makeQuery().limit(pagination.pageCount, offset: pagination.pageOffset).all()
         let jsonDocument = try document(forResources: resources, baseUrl: req.uri)
 
         return JsonApiResponse(status: .ok, document: jsonDocument)
@@ -224,7 +225,7 @@ public extension JsonApiResourceController {
         }
 
         var resource: Resource
-        if let node = bodyData?["attributes"]?.makeNode() {
+        if let node = bodyData?["attributes"]?.makeNode(in: nil) {
             resource = try Resource(node: node)
         } else {
             throw JsonApiAttributesRequiredError()
@@ -316,7 +317,7 @@ public extension JsonApiResourceController {
             throw JsonApiRecordNotFoundError(id: id)
         }
 
-        if let node = bodyData?["attributes"]?.makeNode() {
+        if let node = bodyData?["attributes"]?.makeNode(in: nil) {
             try resource.update(node: node)
         }
 
