@@ -37,11 +37,12 @@ extension URI {
                 // characters between the square brackets...
                 // let dictionaryKey = keyKey.dictionaryKey
 
-                if let a = try? json[topLevelKey]?.makeJSON().array, var arr = a {
-                    arr.append(keyValue.value)
+                if let arr = json[topLevelKey]?.makeJSON().array {
+                    //arr.append(keyValue.value)
 
                     let jsonArr = arr.map({ JSON(Node($0.string ?? "")) })
-                    json[topLevelKey] = JSON(jsonArr)
+                    try? json.set(topLevelKey, JSON(jsonArr))
+                    //json[topLevelKey] = JSON(jsonArr)
                 } else {
                     json[topLevelKey] = JSON([JSON(Node(keyValue.value))])
                 }
@@ -56,7 +57,8 @@ extension URI {
                 let topLevelKey = keyKey.topLevelKey
                 let dictionaryKey = keyKey.dictionaryKey
 
-                if let o = try? json[topLevelKey]?.makeJSON(), var old = o {
+                if let o = json[topLevelKey]?.makeJSON() {
+                    var old = o
                     old[dictionaryKey] = JSON(Node(keyValue.value))
 
                     json[topLevelKey] = old
